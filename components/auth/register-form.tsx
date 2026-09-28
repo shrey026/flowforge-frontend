@@ -62,7 +62,7 @@ export function RegisterForm() {
   if (success) {
     return (
       <div className="flex flex-col items-center gap-2 py-4 text-center">
-        <p className="text-sm font-medium text-emerald-700">
+        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
           Account created successfully.
         </p>
         <p className="text-sm text-muted-foreground">

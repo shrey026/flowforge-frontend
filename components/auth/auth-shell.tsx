@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 export function AuthShell({
   title,
@@ -13,7 +14,11 @@ export function AuthShell({
   footer: ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-full flex-1 items-center justify-center overflow-hidden bg-gradient-to-b from-emerald-50/60 via-background to-background px-4 py-12">
+    <div className="relative flex min-h-full flex-1 items-center justify-center overflow-hidden bg-gradient-to-b from-emerald-50/60 via-background to-background px-4 py-12 dark:from-emerald-950/20">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-2 text-center">
           <Link
