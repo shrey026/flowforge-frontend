@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Building2, LogOut, Menu } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { OrganizationSelector } from "@/components/layout/organization-selector";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { useAuth, useLogout } from "@/lib/hooks/use-auth";
 
@@ -84,14 +85,7 @@ export function AppHeader() {
       <div className="flex items-center gap-3">
         <ThemeToggle />
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="hidden items-center gap-1.5 text-muted-foreground sm:inline-flex"
-        >
-          <Building2 className="size-3.5" />
-          My Workspace
-        </Button>
+        <OrganizationSelector />
 
         <DropdownMenu>
           <DropdownMenuTrigger

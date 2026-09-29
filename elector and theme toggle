@@ -1,0 +1,176 @@
+warning: in the working copy of 'app/(app)/layout.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/layout/app-header.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/layout/app-sidebar.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/providers/theme-provider.tsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/app/(app)/layout.tsx b/app/(app)/layout.tsx[m
+[1mindex 2ade924..2c793a3 100644[m
+[1m--- a/app/(app)/layout.tsx[m
+[1m+++ b/app/(app)/layout.tsx[m
+[36m@@ -6,6 +6,7 @@[m [mimport type { ReactNode } from "react";[m
+ [m
+ import { AppHeader } from "@/components/layout/app-header";[m
+ import { AppSidebar } from "@/components/layout/app-sidebar";[m
+[32m+[m[32mimport { OrganizationProvider } from "@/components/providers/organization-provider";[m
+ import { useAuth } from "@/lib/hooks/use-auth";[m
+ [m
+ export default function AuthenticatedLayout({[m
+[36m@@ -31,17 +32,19 @@[m [mexport default function AuthenticatedLayout({[m
+   }[m
+ [m
+   return ([m
+[31m-    <div className="flex h-full min-h-svh w-full">[m
+[31m-      <aside className="hidden w-60 shrink-0 border-r border-sidebar-border lg:block">[m
+[31m-        <AppSidebar />[m
+[31m-      </aside>[m
+[32m+[m[32m    <OrganizationProvider>[m
+[32m+[m[32m      <div className="flex h-full min-h-svh w-full">[m
+[32m+[m[32m        <aside className="hidden w-60 shrink-0 border-r border-sidebar-border lg:block">[m
+[32m+[m[32m          <AppSidebar />[m
+[32m+[m[32m        </aside>[m
+ [m
+[31m-      <div className="flex min-w-0 flex-1 flex-col">[m
+[31m-        <AppHeader />[m
+[31m-        <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">[m
+[31m-          {children}[m
+[31m-        </main>[m
+[32m+[m[32m        <div className="flex min-w-0 flex-1 flex-col">[m
+[32m+[m[32m          <AppHeader />[m
+[32m+[m[32m          <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">[m
+[32m+[m[32m            {children}[m
+[32m+[m[32m          </main>[m
+[32m+[m[32m        </div>[m
+       </div>[m
+[31m-    </div>[m
+[32m+[m[32m    </OrganizationProvider>[m
+   );[m
+ }[m
+[1mdiff --git a/components/layout/app-header.tsx b/components/layout/app-header.tsx[m
+[1mindex 2d2d0ac..2589bcf 100644[m
+[1m--- a/components/layout/app-header.tsx[m
+[1m+++ b/components/layout/app-header.tsx[m
+[36m@@ -2,7 +2,7 @@[m
+ [m
+ import { useState } from "react";[m
+ import { usePathname } from "next/navigation";[m
+[31m-import { Building2, LogOut, Menu } from "lucide-react";[m
+[32m+[m[32mimport { LogOut, Menu } from "lucide-react";[m
+ [m
+ import { Button } from "@/components/ui/button";[m
+ import {[m
+[36m@@ -24,6 +24,7 @@[m [mimport {[m
+   SheetTrigger,[m
+ } from "@/components/ui/sheet";[m
+ import { AppSidebar } from "@/components/layout/app-sidebar";[m
+[32m+[m[32mimport { OrganizationSelector } from "@/components/layout/organization-selector";[m
+ import { ThemeToggle } from "@/components/layout/theme-toggle";[m
+ import { useAuth, useLogout } from "@/lib/hooks/use-auth";[m
+ [m
+[36m@@ -84,14 +85,7 @@[m [mexport function AppHeader() {[m
+       <div className="flex items-center gap-3">[m
+         <ThemeToggle />[m
+ [m
+[31m-        <Button[m
+[31m-          variant="outline"[m
+[31m-          size="sm"[m
+[31m-          className="hidden items-center gap-1.5 text-muted-foreground sm:inline-flex"[m
+[31m-        >[m
+[31m-          <Building2 className="size-3.5" />[m
+[31m-          My Workspace[m
+[31m-        </Button>[m
+[32m+[m[32m        <OrganizationSelector />[m
+ [m
+         <DropdownMenu>[m
+           <DropdownMenuTrigger[m
+[1mdiff --git a/components/layout/app-sidebar.tsx b/components/layout/app-sidebar.tsx[m
+[1mindex 610f8ef..f939867 100644[m
+[1m--- a/components/layout/app-sidebar.tsx[m
+[1m+++ b/components/layout/app-sidebar.tsx[m
+[36m@@ -19,6 +19,15 @@[m [mconst NAV_ITEMS = [[m
+   { label: "Settings", href: "/settings", icon: Settings },[m
+ ] as const;[m
+ [m
+[32m+[m[32m// Matches the item's own route and its sub-routes (e.g. "/projects/123"),[m
+[32m+[m[32m// but never a sibling route — "/members" must never match "/projects".[m
+[32m+[m[32m// A plain `pathname.startsWith(href)` would wrongly match "/projects"[m
+[32m+[m[32m// against a hypothetical "/projects-archive" route; anchoring on the exact[m
+[32m+[m[32m// path or a "/"-terminated prefix avoids that class of bug entirely.[m
+[32m+[m[32mfunction isNavItemActive(pathname: string, href: string): boolean {[m
+[32m+[m[32m  return pathname === href || pathname.startsWith(`${href}/`);[m
+[32m+[m[32m}[m
+[32m+[m
+ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {[m
+   const pathname = usePathname();[m
+ [m
+[36m@@ -37,8 +46,7 @@[m [mexport function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {[m
+ [m
+       <nav className="flex flex-1 flex-col gap-0.5">[m
+         {NAV_ITEMS.map((item) => {[m
+[31m-          const isActive =[m
+[31m-            pathname === item.href || pathname.startsWith(`${item.href}/`);[m
+[32m+[m[32m          const isActive = isNavItemActive(pathname, item.href);[m
+           const Icon = item.icon;[m
+ [m
+           return ([m
+[1mdiff --git a/components/providers/theme-provider.tsx b/components/providers/theme-provider.tsx[m
+[1mindex e6927df..eafd6cc 100644[m
+[1m--- a/components/providers/theme-provider.tsx[m
+[1m+++ b/components/providers/theme-provider.tsx[m
+[36m@@ -2,9 +2,9 @@[m
+ [m
+ import {[m
+   createContext,[m
+[32m+[m[32m  useCallback,[m
+   useContext,[m
+[31m-  useEffect,[m
+[31m-  useState,[m
+[32m+[m[32m  useSyncExternalStore,[m
+   type ReactNode,[m
+ } from "react";[m
+ [m
+[36m@@ -20,34 +20,51 @@[m [minterface ThemeContextValue {[m
+ [m
+ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);[m
+ [m
+[32m+[m[32mconst themeListeners = new Set<() => void>();[m
+[32m+[m
+[32m+[m[32mfunction subscribe(callback: () => void) {[m
+[32m+[m[32m  themeListeners.add(callback);[m
+[32m+[m[32m  return () => themeListeners.delete(callback);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m// Read the class the inline script (in the root layout) already applied to[m
+[32m+[m[32m// <html> before hydration.[m
+[32m+[m[32mfunction getSnapshot(): Theme {[m
+[32m+[m[32m  return document.documentElement.classList.contains("dark")[m
+[32m+[m[32m    ? "dark"[m
+[32m+[m[32m    : "light";[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m// Light mode is the default on the server, since there's no DOM to read[m
+[32m+[m[32m// from. useSyncExternalStore is built to reconcile this against the real[m
+[32m+[m[32m// client value without triggering a hydration mismatch warning.[m
+[32m+[m[32mfunction getServerSnapshot(): Theme {[m
+[32m+[m[32m  return "light";[m
+[32m+[m[32m}[m
+[32m+[m
+ function applyTheme(theme: Theme) {[m
+   document.documentElement.classList.toggle("dark", theme === "dark");[m
+[32m+[m[32m  try {[m
+[32m+[m[32m    window.localStorage.setItem(STORAGE_KEY, theme);[m
+[32m+[m[32m  } catch {[m
+[32m+[m[32m    // localStorage may be unavailable (e.g. private browsing); theme still[m
+[32m+[m[32m    // works for the current session via the class on <html>.[m
+[32m+[m[32m  }[m
+[32m+[m[32m  themeListeners.forEach((listener) => listener());[m
+ }[m
+ [m
+ export function ThemeProvider({ children }: { children: ReactNode }) {[m
+[31m-  // Light mode is the default; the inline script in the root layout applies[m
+[31m-  // the "dark" class before hydration, so we just read it back here to stay[m
+[31m-  // in sync without causing a flash.[m
+[31m-  const [theme, setThemeState] = useState<Theme>(() => {[m
+[31m-    if (typeof document === "undefined") return "light";[m
+[31m-    return document.documentElement.classList.contains("dark")[m
+[31m-      ? "dark"[m
+[31m-      : "light";[m
+[31m-  });

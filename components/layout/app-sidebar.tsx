@@ -19,6 +19,15 @@ const NAV_ITEMS = [
   { label: "Settings", href: "/settings", icon: Settings },
 ] as const;
 
+// Matches the item's own route and its sub-routes (e.g. "/projects/123"),
+// but never a sibling route — "/members" must never match "/projects".
+// A plain `pathname.startsWith(href)` would wrongly match "/projects"
+// against a hypothetical "/projects-archive" route; anchoring on the exact
+// path or a "/"-terminated prefix avoids that class of bug entirely.
+function isNavItemActive(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
@@ -37,8 +46,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav className="flex flex-1 flex-col gap-0.5">
         {NAV_ITEMS.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const isActive = isNavItemActive(pathname, item.href);
           const Icon = item.icon;
 
           return (

@@ -2,9 +2,9 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
-  useEffect,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
@@ -20,34 +20,51 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
+const themeListeners = new Set<() => void>();
+
+function subscribe(callback: () => void) {
+  themeListeners.add(callback);
+  return () => themeListeners.delete(callback);
+}
+
+// Read the class the inline script (in the root layout) already applied to
+// <html> before hydration.
+function getSnapshot(): Theme {
+  return document.documentElement.classList.contains("dark")
+    ? "dark"
+    : "light";
+}
+
+// Light mode is the default on the server, since there's no DOM to read
+// from. useSyncExternalStore is built to reconcile this against the real
+// client value without triggering a hydration mismatch warning.
+function getServerSnapshot(): Theme {
+  return "light";
+}
+
 function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle("dark", theme === "dark");
+  try {
+    window.localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    // localStorage may be unavailable (e.g. private browsing); theme still
+    // works for the current session via the class on <html>.
+  }
+  themeListeners.forEach((listener) => listener());
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Light mode is the default; the inline script in the root layout applies
-  // the "dark" class before hydration, so we just read it back here to stay
-  // in sync without causing a flash.
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof document === "undefined") return "light";
-    return document.documentElement.classList.contains("dark")
-      ? "dark"
-      : "light";
-  });
+  const theme = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot
+  );
 
-  useEffect(() => {
-    applyTheme(theme);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, theme);
-    } catch {
-      // localStorage may be unavailable (e.g. private browsing); theme still
-      // works for the current session via the class on <html>.
-    }
-  }, [theme]);
-
-  const setTheme = (next: Theme) => setThemeState(next);
-  const toggleTheme = () =>
-    setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
+  const setTheme = useCallback((next: Theme) => applyTheme(next), []);
+  const toggleTheme = useCallback(
+    () => applyTheme(theme === "dark" ? "light" : "dark"),
+    [theme]
+  );
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
