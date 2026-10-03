@@ -36,8 +36,12 @@ export function useLogout() {
   return useMutation({
     mutationFn: logoutUser,
     onSuccess: () => {
-      queryClient.setQueryData(authQueryKey, null);
-      queryClient.removeQueries({ queryKey: authQueryKey });
+      // Every cached query (organizations, members, projects, ...) is
+      // scoped to the signed-in user. Clearing the whole cache, not just
+      // the auth key, stops it from leaking into whichever account signs
+      // in next in this tab — e.g. a stale OWNER role surviving into a
+      // MEMBER session and letting RBAC-gated UI render incorrectly.
+      queryClient.clear();
       router.push("/login");
     },
   });

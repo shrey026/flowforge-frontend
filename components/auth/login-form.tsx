@@ -35,8 +35,11 @@ export function LoginForm() {
     mutationFn: (values: LoginFormValues) => loginUser(values),
     onSuccess: async (user) => {
       setFormError(null);
+      // Drop any cached data from a previous session in this tab (e.g. a
+      // different account's organization roles) before seeding the new
+      // one, so stale permissions can't leak across users.
+      queryClient.clear();
       queryClient.setQueryData(authQueryKey, user);
-      await queryClient.invalidateQueries({ queryKey: authQueryKey });
       router.push("/dashboard");
     },
     onError: (error) => {
