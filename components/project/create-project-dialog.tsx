@@ -31,18 +31,32 @@ function getErrorMessage(error: unknown, fallback: string): string {
 interface CreateProjectDialogProps {
   organizationId: string;
   requesterRole: OrganizationRole;
+  /**
+   * Pass `open` / `onOpenChange` to drive the dialog from elsewhere (the
+   * header, the command palette). Left out, the dialog manages itself and
+   * renders its own trigger button.
+   */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
 }
 
 export function CreateProjectDialog({
   organizationId,
   requesterRole,
+  open: controlledOpen,
+  onOpenChange,
+  showTrigger = true,
 }: CreateProjectDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
 
   const createProject = useCreateProject(organizationId);
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
 
   if (!canManageOrganization(requesterRole)) {
     return null;
@@ -56,7 +70,8 @@ export function CreateProjectDialog({
   };
 
   const handleOpenChange = (nextOpen: boolean) => {
-    setOpen(nextOpen);
+    if (!isControlled) setInternalOpen(nextOpen);
+    onOpenChange?.(nextOpen);
     if (!nextOpen) {
       resetForm();
     }
@@ -91,15 +106,18 @@ export function CreateProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button size="sm" className="gap-1.5" />}>
-        <Plus className="size-4" />
-        New Project
-      </DialogTrigger>
+      {showTrigger && (
+        <DialogTrigger render={<Button />}>
+          <Plus />
+          New project
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New project</DialogTitle>
           <DialogDescription>
-            Create a new project for this organization.
+            Projects group related work for your team. You can change the
+            details later.
           </DialogDescription>
         </DialogHeader>
 
@@ -114,26 +132,34 @@ export function CreateProjectDialog({
                 if (nameError) setNameError(null);
               }}
               aria-invalid={nameError ? true : undefined}
+              aria-describedby={nameError ? "project-name-error" : undefined}
               placeholder="Website redesign"
               autoFocus
             />
             {nameError && (
-              <p className="text-xs text-destructive">{nameError}</p>
+              <p id="project-name-error" className="text-xs text-destructive">
+                {nameError}
+              </p>
             )}
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="project-description">Description</Label>
+            <Label htmlFor="project-description">
+              Description
+              <span className="font-normal text-muted-foreground">
+                Optional
+              </span>
+            </Label>
             <Input
               id="project-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Optional"
+              placeholder="What is this project for?"
             />
           </div>
 
           {createProject.isError && (
-            <p className="text-sm text-destructive">
+            <p role="alert" className="text-[13px] text-destructive">
               {getErrorMessage(
                 createProject.error,
                 "Couldn't create project."

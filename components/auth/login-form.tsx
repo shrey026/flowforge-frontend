@@ -61,7 +61,7 @@ export function LoginForm() {
       {formError ? (
         <div
           role="alert"
-          className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          className="rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2 text-[13px] text-destructive"
         >
           {formError}
         </div>
@@ -100,7 +100,7 @@ export function LoginForm() {
       <Button
         type="submit"
         disabled={isPending}
-        className="mt-2 h-9 w-full bg-emerald-600 text-white hover:bg-emerald-600/90"
+        className="mt-1 h-9 w-full"
       >
         {isPending ? "Signing in…" : "Sign in"}
       </Button>

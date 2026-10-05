@@ -1,44 +1,27 @@
 "use client";
 
-import { FolderKanban } from "lucide-react";
+import { useState } from "react";
+import { CircleAlert, FolderKanban, Plus, Search, SearchX } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { CreateProjectDialog } from "@/components/project/create-project-dialog";
-import { ProjectsTable } from "@/components/project/projects-table";
+import { PageHeader, Panel } from "@/components/layout/page-header";
+import {
+  PROJECT_STATUSES,
+  formatStatus,
+} from "@/components/project/project-status";
+import {
+  ProjectsTable,
+  ProjectsTableSkeleton,
+} from "@/components/project/projects-table";
 import { useOrganizationContext } from "@/components/providers/organization-provider";
-import { canManageOrganization } from "@/lib/api/organizations";
+import { useWorkspaceActions } from "@/components/providers/workspace-actions-provider";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FilterTabs, type FilterTabOption } from "@/components/ui/filter-tabs";
+import { Input } from "@/components/ui/input";
+import type { ProjectStatus } from "@/lib/api/projects";
 import { useProjects } from "@/lib/hooks/use-projects";
 
-function ProjectsTableSkeleton() {
-  return (
-    <Table>
-      <TableBody>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <TableRow key={index}>
-            <TableCell>
-              <Skeleton className="h-4 w-32" />
-            </TableCell>
-            <TableCell className="hidden sm:table-cell">
-              <Skeleton className="h-4 w-48" />
-            </TableCell>
-            <TableCell>
-              <Skeleton className="h-6 w-20" />
-            </TableCell>
-            <TableCell className="hidden md:table-cell">
-              <Skeleton className="h-4 w-20" />
-            </TableCell>
-            <TableCell className="text-right">
-              <Skeleton className="ml-auto h-6 w-6" />
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
-}
+type StatusFilter = "ALL" | ProjectStatus;
 
 export default function ProjectsPage() {
   const { activeOrganization, isLoading: isOrganizationLoading } =
@@ -46,76 +29,149 @@ export default function ProjectsPage() {
   const { projects, isLoading, error, refetch } = useProjects(
     activeOrganization?.id
   );
+  const { openCreateProject, canCreateProject } = useWorkspaceActions();
+
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [query, setQuery] = useState("");
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredProjects = projects.filter((project) => {
+    if (statusFilter !== "ALL" && project.status !== statusFilter) return false;
+    if (!normalizedQuery) return true;
+    return (
+      project.name.toLowerCase().includes(normalizedQuery) ||
+      (project.description ?? "").toLowerCase().includes(normalizedQuery)
+    );
+  });
+
+  const filterOptions: FilterTabOption<StatusFilter>[] = [
+    { value: "ALL", label: "All", count: projects.length },
+    ...PROJECT_STATUSES.map((status) => ({
+      value: status,
+      label: formatStatus(status),
+      count: projects.filter((project) => project.status === status).length,
+    })),
+  ];
+
+  const isFiltering = statusFilter !== "ALL" || normalizedQuery !== "";
+  const showToolbar =
+    Boolean(activeOrganization) && !isLoading && !error && projects.length > 0;
+
+  const createButton = canCreateProject && (
+    <Button onClick={openCreateProject}>
+      <Plus />
+      New project
+    </Button>
+  );
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-foreground">Projects</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Organize and track your team&apos;s projects.
-          </p>
-        </div>
-        {activeOrganization && canManageOrganization(activeOrganization.role) && (
-          <CreateProjectDialog
-            organizationId={activeOrganization.id}
-            requesterRole={activeOrganization.role}
-          />
-        )}
-      </div>
+      <PageHeader
+        title="Projects"
+        description={
+          activeOrganization
+            ? `Everything ${activeOrganization.name} is working on.`
+            : "Organize and track your team's projects."
+        }
+        actions={createButton}
+      />
 
-      <Card>
-        <CardContent className="p-0">
-          {!activeOrganization ? (
-            isOrganizationLoading ? (
-              <ProjectsTableSkeleton />
-            ) : (
-              <div className="flex flex-col items-center gap-2 py-16 text-center">
-                <FolderKanban className="size-8 text-muted-foreground" />
-                <p className="text-sm font-medium text-foreground">
-                  No organization selected
-                </p>
-                <p className="max-w-sm text-sm text-muted-foreground">
-                  Select an organization to view its projects.
-                </p>
-              </div>
-            )
-          ) : isLoading ? (
+      {showToolbar && (
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <FilterTabs
+            aria-label="Filter projects by status"
+            options={filterOptions}
+            value={statusFilter}
+            onValueChange={setStatusFilter}
+            className="sm:flex-1"
+          />
+          <div className="relative sm:mb-1.5 sm:w-56">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Filter projects"
+              aria-label="Filter projects by name"
+              className="pl-8"
+            />
+          </div>
+        </div>
+      )}
+
+      <Panel>
+        {!activeOrganization ? (
+          isOrganizationLoading ? (
             <ProjectsTableSkeleton />
-          ) : error ? (
-            <div className="flex flex-col items-center gap-2 py-16 text-center">
-              <FolderKanban className="size-8 text-muted-foreground" />
-              <p className="text-sm font-medium text-foreground">
-                Couldn&apos;t load projects
-              </p>
-              <p className="max-w-sm text-sm text-muted-foreground">
-                Something went wrong while fetching this organization&apos;s
-                projects.
-              </p>
+          ) : (
+            <EmptyState
+              icon={FolderKanban}
+              title="No organization selected"
+              description="Select an organization to view its projects."
+            />
+          )
+        ) : isLoading ? (
+          <ProjectsTableSkeleton />
+        ) : error ? (
+          <EmptyState
+            icon={CircleAlert}
+            title="Couldn't load projects"
+            description="Something went wrong while fetching this organization's projects."
+            action={
               <Button variant="outline" size="sm" onClick={() => refetch()}>
                 Retry
               </Button>
-            </div>
-          ) : projects.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-16 text-center">
-              <FolderKanban className="size-8 text-muted-foreground" />
-              <p className="text-sm font-medium text-foreground">
-                No projects yet
-              </p>
-              <p className="max-w-sm text-sm text-muted-foreground">
-                Create your first project to start organizing your team&apos;s
-                work.
-              </p>
-            </div>
-          ) : (
-            <ProjectsTable
-              projects={projects}
-              requesterRole={activeOrganization.role}
-              organizationId={activeOrganization.id}
-            />
-          )}
-        </CardContent>
-      </Card>
+            }
+          />
+        ) : projects.length === 0 ? (
+          <EmptyState
+            icon={FolderKanban}
+            title="No projects yet"
+            description={
+              canCreateProject
+                ? "Create your first project to start organizing your team's work."
+                : "Projects created by an owner or admin will appear here."
+            }
+            action={
+              canCreateProject && (
+                <Button size="sm" onClick={openCreateProject}>
+                  <Plus />
+                  Create project
+                </Button>
+              )
+            }
+          />
+        ) : filteredProjects.length === 0 ? (
+          <EmptyState
+            icon={SearchX}
+            title="No matching projects"
+            description="Nothing matches the current filters."
+            action={
+              isFiltering && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setStatusFilter("ALL");
+                    setQuery("");
+                  }}
+                >
+                  Clear filters
+                </Button>
+              )
+            }
+          />
+        ) : (
+          <ProjectsTable
+            projects={filteredProjects}
+            requesterRole={activeOrganization.role}
+            organizationId={activeOrganization.id}
+          />
+        )}
+      </Panel>
     </div>
   );
 }

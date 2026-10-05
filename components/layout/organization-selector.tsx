@@ -1,8 +1,7 @@
 "use client";
 
-import { Building2, ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,13 +9,26 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Organization } from "@/lib/api/organizations";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useOrganizationContext } from "@/components/providers/organization-provider";
+import { formatEnumLabel, getInitials } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
-function formatRole(role: Organization["role"]): string {
-  return role.charAt(0) + role.slice(1).toLowerCase();
+function OrganizationGlyph({ name }: { name: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="flex size-5 shrink-0 items-center justify-center rounded-sm bg-foreground text-[10px] leading-none font-semibold text-background"
+    >
+      {getInitials(name).charAt(0)}
+    </span>
+  );
 }
 
+const ROW_CLASSES =
+  "flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-[13px]";
+
+/** Workspace switcher shown at the top of the sidebar. */
 export function OrganizationSelector() {
   const {
     organizations,
@@ -28,67 +40,51 @@ export function OrganizationSelector() {
 
   if (isLoading) {
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        disabled
-        className="hidden items-center gap-1.5 text-muted-foreground sm:inline-flex"
-      >
-        <Building2 className="size-3.5" />
-        Loading…
-      </Button>
+      <div className={ROW_CLASSES} role="status" aria-label="Loading organizations">
+        <Skeleton className="size-5" />
+        <Skeleton className="h-3.5 w-28" />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        disabled
-        className="hidden items-center gap-1.5 text-destructive sm:inline-flex"
-      >
-        <Building2 className="size-3.5" />
+      <div className={cn(ROW_CLASSES, "text-destructive")} role="alert">
         Couldn&apos;t load organizations
-      </Button>
+      </div>
     );
   }
 
   if (organizations.length === 0) {
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        disabled
-        className="hidden items-center gap-1.5 text-muted-foreground sm:inline-flex"
-      >
-        <Building2 className="size-3.5" />
+      <div className={cn(ROW_CLASSES, "text-muted-foreground")}>
         No organizations
-      </Button>
+      </div>
     );
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={
-          <Button
-            variant="outline"
-            size="sm"
-            className="hidden max-w-48 items-center gap-1.5 text-foreground sm:inline-flex"
-          />
-        }
+        aria-label="Switch organization"
+        className={cn(
+          ROW_CLASSES,
+          "glass-interactive border font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        )}
       >
-        <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
-        <span className="truncate">
+        {activeOrganization && (
+          <OrganizationGlyph name={activeOrganization.name} />
+        )}
+        <span className="min-w-0 flex-1 truncate">
           {activeOrganization?.name ?? "Select organization"}
         </span>
-        <ChevronsUpDown className="size-3 shrink-0 text-muted-foreground" />
+        <ChevronsUpDown
+          className="size-3.5 shrink-0 text-muted-foreground"
+          aria-hidden="true"
+        />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-          Organizations
-        </div>
+      <DropdownMenuContent align="start" className="min-w-56">
+        <div className="eyebrow px-2 pt-1.5 pb-1">Organizations</div>
         <DropdownMenuRadioGroup
           value={activeOrganization?.id}
           onValueChange={(value) => {
@@ -104,13 +100,16 @@ export function OrganizationSelector() {
             <DropdownMenuRadioItem
               key={organization.id}
               value={organization.id}
-              className="flex-col items-start gap-0"
+              className="gap-2"
             >
-              <span className="text-sm font-medium text-foreground">
-                {organization.name}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {formatRole(organization.role)}
+              <OrganizationGlyph name={organization.name} />
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate font-medium text-foreground">
+                  {organization.name}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {formatEnumLabel(organization.role)}
+                </span>
               </span>
             </DropdownMenuRadioItem>
           ))}

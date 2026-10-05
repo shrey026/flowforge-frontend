@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+
+import { Logo } from "@/components/layout/logo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 export function AuthShell({
@@ -14,36 +16,33 @@ export function AuthShell({
   footer: ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-full flex-1 items-center justify-center overflow-hidden bg-gradient-to-b from-emerald-50/60 via-background to-background px-4 py-12 dark:from-emerald-950/20">
-      <div className="absolute top-4 right-4">
+    <div className="flex min-h-full flex-1 flex-col">
+      <header className="flex h-14 shrink-0 items-center justify-between px-4 sm:px-6">
+        <Link
+          href="/"
+          className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        >
+          <Logo />
+        </Link>
         <ThemeToggle />
-      </div>
+      </header>
 
-      <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center gap-2 text-center">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-lg font-semibold tracking-tight"
-          >
-            <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-600 text-sm font-bold text-white">
-              F
-            </span>
-            FlowForge
-          </Link>
-          <div className="space-y-1">
-            <h1 className="text-xl font-semibold text-foreground">{title}</h1>
-            <p className="text-sm text-muted-foreground">{description}</p>
+      <main className="flex flex-1 items-center justify-center px-4 pt-6 pb-20">
+        <div className="w-full max-w-[22.5rem]">
+          <div className="mb-6">
+            <h1 className="text-2xl leading-8 font-semibold tracking-tight text-foreground">
+              {title}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
           </div>
-        </div>
 
-        <div className="rounded-2xl bg-card p-6 ring-1 ring-foreground/10 shadow-sm">
-          {children}
-        </div>
+          <div className="glass-surface rounded-2xl border p-5">
+            {children}
+          </div>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          {footer}
-        </p>
-      </div>
+          <p className="mt-5 text-[13px] text-muted-foreground">{footer}</p>
+        </div>
+      </main>
     </div>
   );
 }

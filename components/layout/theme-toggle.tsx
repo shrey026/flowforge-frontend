@@ -1,23 +1,35 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useTheme } from "@/components/providers/theme-provider";
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
+  const label = isDark ? "Switch to light theme" : "Switch to dark theme";
 
   return (
-    <label className="flex items-center gap-2">
-      <span className="sr-only">Toggle dark mode</span>
-      <Sun className="size-4 text-muted-foreground" aria-hidden="true" />
-      <Switch
-        checked={isDark}
-        onCheckedChange={toggleTheme}
-        aria-label="Toggle dark mode"
-      />
-      <Moon className="size-4 text-muted-foreground" aria-hidden="true" />
-    </label>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={label}
+            onClick={toggleTheme}
+          />
+        }
+      >
+        {isDark ? <Sun /> : <Moon />}
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }

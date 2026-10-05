@@ -114,3 +114,30 @@ export async function updateProject(
 export async function deleteProject(projectId: string): Promise<void> {
   await apiClient.delete(`/projects/${projectId}`);
 }
+
+interface ProjectMemberResponse {
+  status: "success";
+  message?: string;
+  data: {
+    member: ProjectMemberSummary;
+  };
+}
+
+export async function addProjectMember(
+  projectId: string,
+  userId: string
+): Promise<ProjectMemberSummary> {
+  const response = await apiClient.post<ProjectMemberResponse>(
+    `/projects/${projectId}/members`,
+    { userId }
+  );
+
+  return response.data.data.member;
+}
+
+export async function removeProjectMember(
+  projectId: string,
+  userId: string
+): Promise<void> {
+  await apiClient.delete(`/projects/${projectId}/members/${userId}`);
+}

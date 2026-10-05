@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-geist-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -27,6 +27,9 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -39,92 +42,249 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Fixed scale: controls 6px, menus 8px, cards 10px, dialogs 12px. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+  --radius-3xl: 16px;
+  --radius-4xl: 20px;
 }
 
+/*
+ * FlowForge tokens.
+ * `--brand` is the pure identity green, used for indicators, focus rings and
+ * the logo. `--primary` is the slightly deeper fill used behind text so
+ * buttons stay readable. Green is an accent; surfaces stay neutral.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #f6f7f4;
+  --foreground: #111412;
+  --card: #ffffff;
+  --card-foreground: #111412;
+  --popover: #ffffff;
+  --popover-foreground: #111412;
+  --primary: #10865a;
+  --primary-foreground: #ffffff;
+  --secondary: #eef1ee;
+  --secondary-foreground: #111412;
+  --muted: #eff1ee;
+  --muted-foreground: #69716b;
+  --accent: #edf0ec;
+  --accent-foreground: #111412;
+  --destructive: #cf3f3f;
+  --warning: #e9a23b;
+  --brand: #16a36a;
+  --brand-soft: #e8f7ef;
+  --border: #e4e8e4;
+  --input: #d8ddd8;
+  --ring: #16a36a;
+  --chart-1: #16a36a;
+  --chart-2: #69716b;
+  --chart-3: #111412;
+  --chart-4: #e9a23b;
+  --chart-5: #d8ddd8;
+  --sidebar: #f7f8f6;
+  --sidebar-foreground: #111412;
+  --sidebar-primary: #10865a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgb(17 20 18 / 0.055);
+  --sidebar-accent-foreground: #111412;
+  --sidebar-border: #e4e8e4;
+  --sidebar-ring: #16a36a;
+
+  /* Depth: ambient light behind the UI, and the glass surfaces above it. */
+  --accent-glow: rgb(22 163 106 / 0.075);
+  --cool-glow: rgb(104 138 184 / 0.07);
+  --ambient:
+    radial-gradient(58rem 36rem at 6% -8%, var(--accent-glow), transparent 62%),
+    radial-gradient(52rem 38rem at 104% 104%, var(--cool-glow), transparent 60%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.5), transparent 45%);
+  --surface-glass: rgb(255 255 255 / 0.66);
+  --surface-glass-hover: rgb(255 255 255 / 0.86);
+  --surface-bar: rgb(246 247 244 / 0.72);
+  --surface-popover: rgb(255 255 255 / 0.86);
+  --surface-sidebar: rgb(255 255 255 / 0.3);
+  --border-glass: rgb(20 30 25 / 0.09);
+  --border-glass-strong: rgb(20 30 25 / 0.16);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.85);
+  --shadow-popover: 0 14px 36px -14px rgb(17 20 18 / 0.2);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #090b0a;
+  --foreground: #f2f5f3;
+  --card: #111413;
+  --card-foreground: #f2f5f3;
+  --popover: #171a18;
+  --popover-foreground: #f2f5f3;
+  --primary: #21b875;
+  --primary-foreground: #04130c;
+  --secondary: #1b1f1d;
+  --secondary-foreground: #f2f5f3;
+  --muted: #171a18;
+  --muted-foreground: #8d9690;
+  --accent: #1a1e1c;
+  --accent-foreground: #f2f5f3;
+  --destructive: #f07070;
+  --warning: #e9a23b;
+  --brand: #21b875;
+  --brand-soft: #10231a;
+  --border: #252a27;
+  --input: #2f3531;
+  --ring: #21b875;
+  --chart-1: #21b875;
+  --chart-2: #8d9690;
+  --chart-3: #f2f5f3;
+  --chart-4: #e9a23b;
+  --chart-5: #2f3531;
+  --sidebar: #0b0d0c;
+  --sidebar-foreground: #f2f5f3;
+  --sidebar-primary: #21b875;
+  --sidebar-primary-foreground: #04130c;
+  --sidebar-accent: rgb(255 255 255 / 0.06);
+  --sidebar-accent-foreground: #f2f5f3;
+  --sidebar-border: #1e2220;
+  --sidebar-ring: #21b875;
+
+  --accent-glow: rgb(33 184 117 / 0.1);
+  --cool-glow: rgb(96 132 178 / 0.085);
+  --ambient:
+    radial-gradient(60rem 38rem at 6% -10%, var(--accent-glow), transparent 62%),
+    radial-gradient(54rem 40rem at 104% 104%, var(--cool-glow), transparent 60%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.018), transparent 40%);
+  --surface-glass: rgb(255 255 255 / 0.035);
+  --surface-glass-hover: rgb(255 255 255 / 0.06);
+  --surface-bar: rgb(9 11 10 / 0.62);
+  --surface-popover: rgb(22 25 23 / 0.8);
+  --surface-sidebar: rgb(255 255 255 / 0.014);
+  --border-glass: rgb(255 255 255 / 0.08);
+  --border-glass-strong: rgb(255 255 255 / 0.14);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  --shadow-popover: 0 18px 44px -14px rgb(0 0 0 / 0.65);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+    text-rendering: optimizeLegibility;
+  }
+  /* Ambient light. Fixed behind everything, so it never scrolls, never
+     catches pointer events and cannot cause overflow. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: var(--ambient);
+  }
+  ::selection {
+    background-color: color-mix(in oklab, var(--brand) 22%, transparent);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--input) transparent;
+  }
+}
+
+/* Small uppercase section label used across the app. */
+@utility eyebrow {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/*
+ * Glass. Used sparingly: quiet surfaces that let the ambient light through,
+ * the toolbar that content scrolls beneath, and floating layers. Only the
+ * last two blur, since only they ever sit over moving content.
+ */
+@utility glass-surface {
+  background-color: var(--surface-glass);
+  border-color: var(--border-glass);
+  box-shadow: var(--glass-highlight);
+}
+
+/* Faint green-to-cool wash across a wide surface. */
+@utility glass-tint {
+  background-image: linear-gradient(
+    115deg,
+    var(--accent-glow),
+    transparent 32%,
+    transparent 68%,
+    var(--cool-glow)
+  );
+}
+
+@utility glass-interactive {
+  background-color: var(--surface-glass);
+  border-color: var(--border-glass);
+  box-shadow: var(--glass-highlight);
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out,
+    color 150ms ease-out;
+  &:hover,
+  &:focus-visible,
+  &[aria-expanded="true"] {
+    background-color: var(--surface-glass-hover);
+    border-color: var(--border-glass-strong);
+  }
+}
+
+@utility glass-bar {
+  background-color: var(--surface-bar);
+  border-color: var(--border-glass);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+}
+
+@utility glass-popover {
+  background-color: var(--surface-popover);
+  border-color: var(--border-glass-strong);
+  box-shadow: var(--glass-highlight), var(--shadow-popover);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+}
+
+@utility glass-sidebar {
+  background-color: var(--surface-sidebar);
+  border-color: var(--border-glass);
+}
+
+/* Without backdrop-filter, translucent layers would let text show through. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-bar {
+    background-color: var(--background);
+  }
+  .glass-popover {
+    background-color: var(--popover);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

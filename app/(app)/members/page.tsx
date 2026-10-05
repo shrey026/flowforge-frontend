@@ -1,46 +1,29 @@
 "use client";
 
-import { Users } from "lucide-react";
+import { useState } from "react";
+import { CircleAlert, Search, SearchX, Users } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { MembersTable } from "@/components/organization/members-table";
+import { PageHeader, Panel } from "@/components/layout/page-header";
+import {
+  MembersTable,
+  MembersTableSkeleton,
+} from "@/components/organization/members-table";
 import { useOrganizationContext } from "@/components/providers/organization-provider";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FilterTabs, type FilterTabOption } from "@/components/ui/filter-tabs";
+import { Input } from "@/components/ui/input";
+import type { OrganizationRole } from "@/lib/api/organizations";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { useOrganizationMembers } from "@/lib/hooks/use-organization-members";
 
-function MembersTableSkeleton() {
-  return (
-    <Table>
-      <TableBody>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <TableRow key={index}>
-            <TableCell>
-              <div className="flex items-center gap-2.5">
-                <Skeleton className="size-6 rounded-full" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-            </TableCell>
-            <TableCell className="hidden sm:table-cell">
-              <Skeleton className="h-4 w-40" />
-            </TableCell>
-            <TableCell>
-              <Skeleton className="h-6 w-16" />
-            </TableCell>
-            <TableCell className="hidden md:table-cell">
-              <Skeleton className="h-4 w-20" />
-            </TableCell>
-            <TableCell className="text-right">
-              <Skeleton className="ml-auto h-6 w-6" />
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
-}
+type RoleFilter = "ALL" | OrganizationRole;
+
+const ROLE_FILTERS: { value: OrganizationRole; label: string }[] = [
+  { value: "OWNER", label: "Owners" },
+  { value: "ADMIN", label: "Admins" },
+  { value: "MEMBER", label: "Members" },
+];
 
 export default function MembersPage() {
   const { user } = useAuth();
@@ -54,67 +37,125 @@ export default function MembersPage() {
     refetch,
   } = useOrganizationMembers(activeOrganization?.id);
 
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("ALL");
+  const [query, setQuery] = useState("");
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredMembers = members.filter((member) => {
+    if (roleFilter !== "ALL" && member.role !== roleFilter) return false;
+    if (!normalizedQuery) return true;
+    return (
+      member.name.toLowerCase().includes(normalizedQuery) ||
+      member.email.toLowerCase().includes(normalizedQuery)
+    );
+  });
+
+  const filterOptions: FilterTabOption<RoleFilter>[] = [
+    { value: "ALL", label: "All", count: members.length },
+    ...ROLE_FILTERS.map(({ value, label }) => ({
+      value,
+      label,
+      count: members.filter((member) => member.role === value).length,
+    })),
+  ];
+
+  const showToolbar =
+    Boolean(activeOrganization) && !isLoading && !error && members.length > 0;
+
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-semibold text-foreground">Members</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage members and their roles in this organization.
-        </p>
-      </div>
+      <PageHeader
+        title="Members"
+        description={
+          activeOrganization
+            ? `People with access to ${activeOrganization.name}, and what they can do.`
+            : "Manage members and their roles in this organization."
+        }
+      />
 
-      <Card>
-        <CardContent className="p-0">
-          {!activeOrganization ? (
-            isOrganizationLoading ? (
-              <MembersTableSkeleton />
-            ) : (
-              <div className="flex flex-col items-center gap-2 py-16 text-center">
-                <Users className="size-8 text-muted-foreground" />
-                <p className="text-sm font-medium text-foreground">
-                  No organization selected
-                </p>
-                <p className="max-w-sm text-sm text-muted-foreground">
-                  Select an organization to view its members.
-                </p>
-              </div>
-            )
-          ) : isLoading ? (
+      {showToolbar && (
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <FilterTabs
+            aria-label="Filter members by role"
+            options={filterOptions}
+            value={roleFilter}
+            onValueChange={setRoleFilter}
+            className="sm:flex-1"
+          />
+          <div className="relative sm:mb-1.5 sm:w-56">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Filter members"
+              aria-label="Filter members by name or email"
+              className="pl-8"
+            />
+          </div>
+        </div>
+      )}
+
+      <Panel>
+        {!activeOrganization ? (
+          isOrganizationLoading ? (
             <MembersTableSkeleton />
-          ) : error ? (
-            <div className="flex flex-col items-center gap-2 py-16 text-center">
-              <Users className="size-8 text-muted-foreground" />
-              <p className="text-sm font-medium text-foreground">
-                Couldn&apos;t load members
-              </p>
-              <p className="max-w-sm text-sm text-muted-foreground">
-                Something went wrong while fetching this organization&apos;s
-                members.
-              </p>
+          ) : (
+            <EmptyState
+              icon={Users}
+              title="No organization selected"
+              description="Select an organization to view its members."
+            />
+          )
+        ) : isLoading ? (
+          <MembersTableSkeleton />
+        ) : error ? (
+          <EmptyState
+            icon={CircleAlert}
+            title="Couldn't load members"
+            description="Something went wrong while fetching this organization's members."
+            action={
               <Button variant="outline" size="sm" onClick={() => refetch()}>
                 Retry
               </Button>
-            </div>
-          ) : members.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-16 text-center">
-              <Users className="size-8 text-muted-foreground" />
-              <p className="text-sm font-medium text-foreground">
-                No members yet
-              </p>
-              <p className="max-w-sm text-sm text-muted-foreground">
-                This organization doesn&apos;t have any members yet.
-              </p>
-            </div>
-          ) : (
-            <MembersTable
-              members={members}
-              requesterRole={requesterRole ?? "MEMBER"}
-              currentUserId={user?.id ?? null}
-              organizationId={activeOrganization.id}
-            />
-          )}
-        </CardContent>
-      </Card>
+            }
+          />
+        ) : members.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="No members yet"
+            description="This organization doesn't have any members yet."
+          />
+        ) : filteredMembers.length === 0 ? (
+          <EmptyState
+            icon={SearchX}
+            title="No matching members"
+            description="Nothing matches the current filters."
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setRoleFilter("ALL");
+                  setQuery("");
+                }}
+              >
+                Clear filters
+              </Button>
+            }
+          />
+        ) : (
+          <MembersTable
+            members={filteredMembers}
+            requesterRole={requesterRole ?? "MEMBER"}
+            currentUserId={user?.id ?? null}
+            organizationId={activeOrganization.id}
+          />
+        )}
+      </Panel>
     </div>
   );
 }
