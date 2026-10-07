@@ -12,6 +12,7 @@ import {
   ProjectStatusControl,
 } from "@/components/project/project-actions";
 import { ProjectMembers } from "@/components/project/project-members";
+import { ProjectTasks } from "@/components/project/project-tasks";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -136,7 +137,10 @@ export default function ProjectDetailsPage() {
       />
 
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <ProjectMembers project={project} />
+        <div className="flex min-w-0 flex-col gap-8">
+          <ProjectTasks project={project} />
+          <ProjectMembers project={project} />
+        </div>
 
         <section aria-labelledby="project-details-heading">
           <SectionHeader
