@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { isAxiosError } from "axios";
 import { CircleAlert, ListChecks, Lock, Plus } from "lucide-react";
 
@@ -85,9 +86,12 @@ function TaskRow({
       )}
     >
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-foreground">
+        <Link
+          href={`/projects/${task.projectId}/tasks/${task.id}`}
+          className="block truncate rounded-sm text-sm font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/40"
+        >
           {task.title}
-        </p>
+        </Link>
         {/* On narrow screens the secondary columns collapse into one line. */}
         <p className="mt-0.5 truncate text-xs text-muted-foreground md:hidden">
           {TASK_PRIORITY_LABEL[task.priority]} priority ·{" "}

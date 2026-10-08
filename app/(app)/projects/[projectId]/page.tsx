@@ -1,12 +1,17 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { isAxiosError } from "axios";
 import { ArrowLeft, CircleAlert, FileQuestion, Trash2 } from "lucide-react";
 
-import { PageHeader, Panel, SectionHeader } from "@/components/layout/page-header";
+import {
+  PageHeader,
+  Panel,
+  Property,
+  SectionHeader,
+} from "@/components/layout/page-header";
 import {
   DeleteProjectDialog,
   ProjectStatusControl,
@@ -29,17 +34,6 @@ function BackLink() {
       <ArrowLeft className="size-3.5" aria-hidden="true" />
       All projects
     </Link>
-  );
-}
-
-function Property({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex min-h-9 items-center justify-between gap-4 border-b border-border px-4 py-1.5 last:border-0">
-      <dt className="shrink-0 text-[13px] text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 text-right text-[13px] text-foreground">
-        {children}
-      </dd>
-    </div>
   );
 }
 

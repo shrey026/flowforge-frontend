@@ -34,10 +34,13 @@ export function TaskActions({
   task,
   members,
   canDelete,
+  onDeleted,
 }: {
   task: Task;
   members: ProjectMemberSummary[];
   canDelete: boolean;
+  /** Called after the task has been deleted, e.g. to leave its details page. */
+  onDeleted?: () => void;
 }) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -88,6 +91,7 @@ export function TaskActions({
           task={task}
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
+          onDeleted={onDeleted}
         />
       )}
     </>
@@ -195,10 +199,12 @@ function DeleteTaskDialog({
   task,
   open,
   onOpenChange,
+  onDeleted,
 }: {
   task: Task;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleted?: () => void;
 }) {
   const deleteTask = useDeleteTask();
 
@@ -232,7 +238,12 @@ function DeleteTaskDialog({
             onClick={() =>
               deleteTask.mutate(
                 { taskId: task.id, projectId: task.projectId },
-                { onSuccess: () => onOpenChange(false) }
+                {
+                  onSuccess: () => {
+                    onOpenChange(false);
+                    onDeleted?.();
+                  },
+                }
               )
             }
           >

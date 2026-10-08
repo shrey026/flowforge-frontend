@@ -87,3 +87,21 @@ export function Panel({
     </div>
   );
 }
+
+/** One label/value row inside a `<dl>` shown in a Panel. */
+export function Property({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex min-h-9 items-center justify-between gap-4 border-b border-border px-4 py-1.5 last:border-0">
+      <dt className="shrink-0 text-[13px] text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 text-right text-[13px] text-foreground">
+        {children}
+      </dd>
+    </div>
+  );
+}
