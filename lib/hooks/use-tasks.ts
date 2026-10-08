@@ -5,6 +5,7 @@ import { isAxiosError } from "axios";
 import {
   createTask,
   deleteTask,
+  getOrganizationTasks,
   getProjectTasks,
   getTask,
   updateTask,
@@ -14,6 +15,12 @@ import {
 
 export function projectTasksQueryKey(projectId: string | null | undefined) {
   return ["project-tasks", projectId] as const;
+}
+
+export function organizationTasksQueryKey(
+  organizationId: string | null | undefined
+) {
+  return ["organization-tasks", organizationId] as const;
 }
 
 export function taskQueryKey(taskId: string | null | undefined) {
@@ -41,6 +48,36 @@ export function useProjectTasks(projectId: string | null | undefined) {
   return {
     tasks: data ?? [],
     isLoading: Boolean(projectId) && isPending,
+    isFetching,
+    error: error ?? null,
+    refetch,
+  };
+}
+
+/**
+ * Fetches every task the user can see across an organization. Disabled while
+ * no organization is selected.
+ *
+ * Deliberately has no `staleTime`: tasks are created, edited and deleted on
+ * the project pages, and this list must reflect that the next time it is
+ * opened rather than serving a cached copy.
+ */
+export function useOrganizationTasks(organizationId: string | null | undefined) {
+  const { data, isPending, isFetching, error, refetch } = useQuery({
+    queryKey: organizationTasksQueryKey(organizationId),
+    queryFn: () => getOrganizationTasks(organizationId as string),
+    enabled: Boolean(organizationId),
+  });
+
+  useEffect(() => {
+    if (error && process.env.NODE_ENV !== "production") {
+      console.error("Failed to load organization tasks:", error);
+    }
+  }, [error]);
+
+  return {
+    tasks: data ?? [],
+    isLoading: Boolean(organizationId) && isPending,
     isFetching,
     error: error ?? null,
     refetch,

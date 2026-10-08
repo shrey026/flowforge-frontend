@@ -41,6 +41,21 @@ export interface TaskDetails extends Task {
   };
 }
 
+/** A task as listed across a whole organization: includes its project. */
+export interface GlobalTask extends Task {
+  project: {
+    id: string;
+    name: string;
+  };
+}
+
+interface OrganizationTasksResponse {
+  status: "success";
+  data: {
+    tasks: GlobalTask[];
+  };
+}
+
 interface TasksResponse {
   status: "success";
   data: {
@@ -125,4 +140,19 @@ export async function updateTask(
 
 export async function deleteTask(taskId: string): Promise<void> {
   await apiClient.delete(`/tasks/${taskId}`);
+}
+
+/**
+ * Every task the requester may see in an organization. The backend does the
+ * filtering: owners and admins get all projects, members only the projects
+ * they belong to.
+ */
+export async function getOrganizationTasks(
+  organizationId: string
+): Promise<GlobalTask[]> {
+  const response = await apiClient.get<OrganizationTasksResponse>(
+    `/organizations/${organizationId}/tasks`
+  );
+
+  return response.data.data.tasks;
 }

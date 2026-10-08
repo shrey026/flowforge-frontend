@@ -1,5 +1,11 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import type { TaskPriority, TaskStatus } from "@/lib/api/tasks";
+import type {
+  TaskPriority,
+  TaskStatus,
+  TaskUserSummary,
+} from "@/lib/api/tasks";
+import { getInitials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /** Workflow order, from not started to finished. */
@@ -112,4 +118,33 @@ export function formatDueDate(dueDate: string): string {
     day: "numeric",
     timeZone: "UTC",
   });
+}
+
+/** Avatar and name of a task's assignee, or "Unassigned". */
+export function TaskAssignee({
+  assignee,
+  className,
+}: {
+  assignee: TaskUserSummary | null;
+  className?: string;
+}) {
+  if (!assignee) {
+    return (
+      <span className={cn("text-[13px] text-muted-foreground", className)}>
+        Unassigned
+      </span>
+    );
+  }
+
+  return (
+    <span className={cn("flex min-w-0 items-center gap-2", className)}>
+      <Avatar size="sm">
+        {assignee.avatarUrl && <AvatarImage src={assignee.avatarUrl} alt="" />}
+        <AvatarFallback>{getInitials(assignee.name)}</AvatarFallback>
+      </Avatar>
+      <span className="truncate text-[13px] text-foreground">
+        {assignee.name}
+      </span>
+    </span>
+  );
 }

@@ -1,40 +1,97 @@
 "use client";
 
 import { useState } from "react";
-import { Info } from "lucide-react";
+import { CircleAlert, ListChecks, SearchX } from "lucide-react";
 
 import { PageHeader, Panel } from "@/components/layout/page-header";
+import { useOrganizationContext } from "@/components/providers/organization-provider";
+import {
+  EMPTY_TASK_FILTERS,
+  TaskFilterBar,
+  applyTaskFilters,
+  hasActiveFilters,
+  type TaskFilters,
+} from "@/components/tasks/task-filters";
+import { TaskBoard, TaskBoardSkeleton } from "@/components/tasks/task-board";
+import { TaskList, TaskListSkeleton } from "@/components/tasks/task-list";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterTabs, type FilterTabOption } from "@/components/ui/filter-tabs";
-import { cn } from "@/lib/utils";
+import { useOrganizationTasks } from "@/lib/hooks/use-tasks";
 
-type TaskView = "board" | "list" | "timeline";
+type TaskView = "board" | "list";
 
 const VIEW_OPTIONS: FilterTabOption<TaskView>[] = [
   { value: "board", label: "Board" },
   { value: "list", label: "List" },
-  { value: "timeline", label: "Timeline", disabled: true, hint: "Soon" },
 ];
 
-// The workflow stages tasks move through. These are structure, not data: no
-// task counts are shown because this screen doesn't load tasks yet.
-const TASK_STAGES = [
-  { id: "BACKLOG", label: "Backlog", marker: "border border-dashed border-muted-foreground/60" },
-  { id: "TODO", label: "Todo", marker: "border border-muted-foreground/60" },
-  { id: "IN_PROGRESS", label: "In progress", marker: "bg-warning" },
-  { id: "IN_REVIEW", label: "In review", marker: "bg-brand" },
-  { id: "DONE", label: "Done", marker: "bg-foreground/55" },
-] as const;
+function pluralizeTasks(count: number): string {
+  return `${count} ${count === 1 ? "task" : "tasks"}`;
+}
+
+function TasksHeader() {
+  return (
+    <PageHeader title="Tasks" description="All tasks across your workspace" />
+  );
+}
 
 export default function TasksPage() {
+  const { activeOrganization, isLoading: isOrganizationLoading } =
+    useOrganizationContext();
+
+  if (!activeOrganization) {
+    return (
+      <div className="flex flex-col gap-6">
+        <TasksHeader />
+        {isOrganizationLoading ? (
+          <TaskBoardSkeleton />
+        ) : (
+          <Panel>
+            <EmptyState
+              icon={ListChecks}
+              title="No organization selected"
+              description="Select an organization to view its tasks."
+            />
+          </Panel>
+        )}
+      </div>
+    );
+  }
+
+  // Keyed so switching organization starts with a clean search and filters.
+  return (
+    <TasksWorkspace
+      key={activeOrganization.id}
+      organizationId={activeOrganization.id}
+    />
+  );
+}
+
+function TasksWorkspace({ organizationId }: { organizationId: string }) {
+  const { tasks, isLoading, error, refetch } =
+    useOrganizationTasks(organizationId);
+
   const [view, setView] = useState<TaskView>("board");
+  const [filters, setFilters] = useState<TaskFilters>(EMPTY_TASK_FILTERS);
+
+  // The response is already limited to what this user may see, so tasks are
+  // rendered as received; filters below only narrow the loaded set.
+  const filteredTasks = applyTaskFilters(tasks, filters);
+  const isFiltering = hasActiveFilters(filters);
+  const isLoaded = !isLoading && !error;
+
+  const summary = !isLoaded
+    ? ""
+    : isFiltering
+      ? `Showing ${filteredTasks.length} of ${pluralizeTasks(tasks.length)}`
+      : pluralizeTasks(tasks.length);
+
+  const clearFilters = () => setFilters(EMPTY_TASK_FILTERS);
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Tasks"
-        description="Track work across your projects, from backlog to done."
-      />
+      <TasksHeader />
 
       <FilterTabs
         aria-label="Task view"
@@ -43,52 +100,59 @@ export default function TasksPage() {
         onValueChange={setView}
       />
 
-      <p className="glass-surface flex items-start gap-2 rounded-md border px-3 py-2.5 text-[13px] leading-5 text-muted-foreground">
-        <Info className="mt-[3px] size-3.5 shrink-0" aria-hidden="true" />
-        <span>
-          <span className="font-medium text-foreground">
-            Tasks aren&apos;t available in the app yet.
-          </span>{" "}
-          This is how they&apos;ll be organized once they are.
-        </span>
-      </p>
+      {isLoaded && tasks.length > 0 && (
+        <TaskFilterBar
+          tasks={tasks}
+          filters={filters}
+          onChange={setFilters}
+          summary={summary}
+        />
+      )}
 
-      {view === "board" ? (
-        <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
-          <ol className="grid min-w-[56rem] grid-cols-5 gap-3" aria-label="Task stages">
-            {TASK_STAGES.map((stage) => (
-              <li key={stage.id} className="flex flex-col gap-2">
-                <div className="flex h-7 items-center gap-2 px-1">
-                  <span
-                    aria-hidden="true"
-                    className={cn("size-2 shrink-0 rounded-full", stage.marker)}
-                  />
-                  <h2 className="eyebrow">{stage.label}</h2>
-                </div>
-                <div
-                  aria-hidden="true"
-                  className="h-64 rounded-xl glass-surface border border-dashed"
-                />
-              </li>
-            ))}
-          </ol>
-        </div>
-      ) : (
+      {isLoading ? (
+        view === "board" ? (
+          <TaskBoardSkeleton />
+        ) : (
+          <TaskListSkeleton />
+        )
+      ) : error ? (
         <Panel>
-          <div
-            aria-hidden="true"
-            className="hidden h-9 grid-cols-[minmax(0,1fr)_9rem_9rem_7rem] items-center gap-x-4 border-b border-border px-4 md:grid"
-          >
-            <span className="eyebrow">Task</span>
-            <span className="eyebrow">Stage</span>
-            <span className="eyebrow">Assignee</span>
-            <span className="eyebrow">Due</span>
-          </div>
           <EmptyState
-            title="Tasks will appear here"
-            description="Once tasks are available in the app, they'll be listed here by stage."
+            icon={CircleAlert}
+            title="Couldn't load tasks"
+            description="Something went wrong while fetching your tasks."
+            action={
+              <Button variant="outline" size="sm" onClick={() => refetch()}>
+                Try again
+              </Button>
+            }
           />
         </Panel>
+      ) : tasks.length === 0 ? (
+        <Panel>
+          <EmptyState
+            icon={ListChecks}
+            title="No tasks yet"
+            description="Tasks from your projects will appear here."
+          />
+        </Panel>
+      ) : filteredTasks.length === 0 ? (
+        <Panel>
+          <EmptyState
+            icon={SearchX}
+            title="No matching tasks"
+            description="Try adjusting your filters or search."
+            action={
+              <Button variant="outline" size="sm" onClick={clearFilters}>
+                Clear filters
+              </Button>
+            }
+          />
+        </Panel>
+      ) : view === "board" ? (
+        <TaskBoard tasks={filteredTasks} />
+      ) : (
+        <TaskList tasks={filteredTasks} />
       )}
     </div>
   );
